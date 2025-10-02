@@ -1,60 +1,36 @@
 package co.com.bancolombia.api;
 
-import org.assertj.core.api.Assertions;
+import co.com.bancolombia.usecase.FindAllReportsUseCase;
+import co.com.bancolombia.usecase.response.ReportResponse;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 
-@ContextConfiguration(classes = {RouterRest.class, Handler.class})
-@WebFluxTest
+import java.util.Date;
+
+import static org.mockito.Mockito.*;
+
 class RouterRestTest {
 
-    @Autowired
-    private WebTestClient webTestClient;
-
     @Test
-    void testListenGETUseCase() {
-        webTestClient.get()
-                .uri("/api/usecase/path")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
-    }
+    void shouldReturnReportsList() {
+        FindAllReportsUseCase useCase = mock(FindAllReportsUseCase.class);
+        when(useCase.execute()).thenReturn(Flux.just(
+            new ReportResponse(1L, "Name", "Desc", new Date(), 10, 2, 3, 4)
+        ));
 
-    @Test
-    void testListenGETOtherUseCase() {
-        webTestClient.get()
-                .uri("/api/otherusercase/path")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
-    }
+        Handler handler = new Handler(useCase);
+        RouterRest router = new RouterRest();
 
-    @Test
-    void testListenPOSTUseCase() {
-        webTestClient.post()
-                .uri("/api/usecase/otherpath")
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue("")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
+        WebTestClient client = WebTestClient.bindToRouterFunction(router.routerFunction(handler)).build();
+
+        client.get()
+            .uri("/v1/api/reports")
+            .exchange()
+            .expectStatus().isOk()
+            .expectHeader().contentType("application/json")
+            .expectBody()
+            .jsonPath("$[0].bootcampId").isEqualTo(1);
     }
 }
+
