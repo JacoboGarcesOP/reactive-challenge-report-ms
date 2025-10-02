@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8084
 spring:
   application:
     name: "report-ms"
@@ -11,6 +11,8 @@ spring:
       path: "/h2"
   profiles:
     include: null
+  rabbitmq:
+    addresses: "${RABBIT_URL}"
 management:
   endpoints:
     web:
@@ -22,3 +24,17 @@ management:
         enabled: true
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
+adapter:
+  rabbit:
+    create:
+      exchange: "${RABBIT_CREATE_TOPIC}"
+      queue: "${RABBIT_CREATE_QUEUE}"
+      routingkey: "${RABBIT_CREATE_ROUTING_KEY}"
+    update:
+      exchange: "${RABBIT_UPDATE_TOPIC}"
+      queue: "${RABBIT_UPDATE_QUEUE}"
+      routingkey: "${RABBIT_UPDATE_ROUTING_KEY}"
+aws:
+  region: "${AWS_DEFAULT_REGION}"
+  dynamodb:
+    table-name: "reports"
